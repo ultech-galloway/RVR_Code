@@ -1,8 +1,11 @@
 """
 Ultrasonic-Guided Square Drive for Sphero RVR
 Robot drives forward until it detects an
-obstacle within 20cm, then turns 90 degrees.
+obstacle within 30cm, then turns 90 degrees.
 Repeats 4 times to create a square.
+
+LAST: 04.01.2026
+BY: Dr. A
 """
 
 import os
@@ -60,7 +63,7 @@ def get_distance():
     
     return distance
 
-async def drive_until_obstacle(heading, obstacle_distance=20):
+async def drive_until_obstacle(heading, obstacle_distance=30):
     print(f"Driving forward at heading {heading}° until obstacle detected...")
     
     # Keep driving until obstacle detected
@@ -105,7 +108,7 @@ async def main():
         
         setup_ultrasonic()
         
-        print("Ready! RVR will drive until obstacle is within 20cm, then turn 90°.")
+        print("Ready! RVR will drive until obstacle is within 30cm, then turn 90°.")
         print("Press Ctrl+C to stop\n")
         await asyncio.sleep(2)
         
@@ -114,7 +117,7 @@ async def main():
         
         for side in range(4):
             print(f"--- Side {side + 1} of 4 ---")
-            await drive_until_obstacle(heading, obstacle_distance=20)
+            await drive_until_obstacle(heading, obstacle_distance=30)
             heading = await turn_90_degrees(heading)
             await asyncio.sleep(1)
         
