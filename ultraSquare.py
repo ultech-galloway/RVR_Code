@@ -85,7 +85,8 @@ async def drive_until_obstacle(heading, obstacle_distance=30):
     
     # Stop the RVR
     await rvr.drive_with_heading(speed=0, heading=heading, flags=DriveFlagsBitmask.none.value)
-    print("  Stopped.\n")
+    await asyncio.sleep(0.5)
+    print("  Motors stopped.\n")
 
 async def turn_90_degrees(current_heading):
     new_heading = (current_heading + 90) % 360
@@ -108,7 +109,7 @@ async def main():
         
         setup_ultrasonic()
         
-        print("Ready! RVR will drive until obstacle is within 30cm, then turn 90°.")
+        print("Ready! RVR will drive until obstacle is within 30cm, stop, then turn 90°.")
         print("Press Ctrl+C to stop\n")
         await asyncio.sleep(2)
         
