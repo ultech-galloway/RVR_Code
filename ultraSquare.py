@@ -1,8 +1,6 @@
 """
 Ultrasonic-Guided Square Drive for Sphero RVR
-Robot drives forward until it detects an obstacle
-within 20cm, then turns 90 degrees. Repeats 4
-times to create a square.
+Robot drives forward until it detects an obstacle within 20cm, then turns 90 degrees. Repeats 4 times to create a square.
 """
 
 import os
@@ -63,9 +61,6 @@ def get_distance():
 async def drive_until_obstacle(heading, obstacle_distance=20):
     print(f"Driving forward at heading {heading}° until obstacle detected...")
     
-    # Start driving
-    await rvr.drive_with_heading(speed=60, heading=heading, flags=DriveFlagsBitmask.none.value)
-    
     # Keep driving until obstacle detected
     while True:
         distance = get_distance()
@@ -79,6 +74,8 @@ async def drive_until_obstacle(heading, obstacle_distance=20):
         else:
             print("  Sensor error - continuing...", end='\r')
         
+        # Send drive command repeatedly to keep moving
+        await rvr.drive_with_heading(speed=60, heading=heading, flags=DriveFlagsBitmask.none.value)
         await asyncio.sleep(0.1)
     
     # Stop the RVR
