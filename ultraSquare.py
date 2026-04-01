@@ -1,6 +1,8 @@
 """
 Ultrasonic-Guided Square Drive for Sphero RVR
-Robot drives forward until it detects an obstacle within 20cm, then turns 90 degrees. Repeats 4 times to create a square.
+Robot drives forward until it detects an
+obstacle within 20cm, then turns 90 degrees.
+Repeats 4 times to create a square.
 """
 
 import os
