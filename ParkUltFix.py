@@ -15,10 +15,9 @@ TRIG = 18
 ECHO = 24
 
 # ── Tuning knobs ──────────────────────────────────────────────────────────────
-WALL_DISTANCE_CM   = 100
 GAP_THRESHOLD_CM   = 70
 SCAN_SPEED         = 60
-SCAN_INTERVAL      = 0.2
+SCAN_INTERVAL      = 0.1
 FORWARD_AFTER_GAP  = 1.4
 
 # ── Sensor helpers ────────────────────────────────────────────────────────────
@@ -65,34 +64,22 @@ async def drive_forward(rvr, speed=SCAN_SPEED):
         right_mode=RawMotorModesEnum.forward.value, right_duty_cycle=speed,
     )
 
-async def drive_reverse(rvr, speed=SCAN_SPEED):
-    await rvr.raw_motors(
-        left_mode=RawMotorModesEnum.reverse.value,  left_duty_cycle=speed,
-        right_mode=RawMotorModesEnum.reverse.value, right_duty_cycle=speed,
-    )
-
 # ── Parallel-park sequence ────────────────────────────────────────────────────
 async def parallel_park(rvr):
     
-    print("▶ Backing up straight to align with spot…")
-    await drive_reverse(rvr, speed=80)
-    await asyncio.sleep(1.0)
-    await stop(rvr)
-    await asyncio.sleep(0.5)
-
-    print("▶ Turning in (backing right)…")
+    print("▶ Turning in (backing right into spot)…")
     await rvr.raw_motors(
-        left_mode=RawMotorModesEnum.reverse.value,  left_duty_cycle=160,
-        right_mode=RawMotorModesEnum.reverse.value, right_duty_cycle=35,
+        left_mode=RawMotorModesEnum.reverse.value,  left_duty_cycle=120,
+        right_mode=RawMotorModesEnum.reverse.value, right_duty_cycle=30,
     )
-    await asyncio.sleep(0.7)
+    await asyncio.sleep(0.9)
     await stop(rvr)
     await asyncio.sleep(0.3)
 
     print("▶ Straightening out…")
     await rvr.raw_motors(
-        left_mode=RawMotorModesEnum.reverse.value,  left_duty_cycle=80,
-        right_mode=RawMotorModesEnum.reverse.value, right_duty_cycle=140,
+        left_mode=RawMotorModesEnum.reverse.value,  left_duty_cycle=30,
+        right_mode=RawMotorModesEnum.reverse.value, right_duty_cycle=120,
     )
     await asyncio.sleep(0.8)
 
@@ -111,6 +98,7 @@ async def main(rvr):
         print("\n=== Scanning for parking spot ===")
         print("Rover will creep forward until a gap is detected.\n")
 
+        # Start driving ONCE before the loop
         await drive_forward(rvr, SCAN_SPEED)
         
         gap_detected = False
@@ -119,7 +107,7 @@ async def main(rvr):
             distance = get_distance()
 
             if distance < 0:
-                print("Sensor error – skipping reading")
+                print("Sensor error – continuing…")
             else:
                 print(f"Distance: {distance:.1f} cm", end="")
                 if distance > GAP_THRESHOLD_CM:
@@ -127,8 +115,10 @@ async def main(rvr):
                     gap_detected = True
                     break
                 else:
-                    print(f"  (wall at {distance:.1f} cm)")
+                    print(f"  (wall detected)")
 
+            # Send drive command again to keep motors running
+            await drive_forward(rvr, SCAN_SPEED)
             await asyncio.sleep(SCAN_INTERVAL)
 
         await stop(rvr)
