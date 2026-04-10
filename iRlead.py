@@ -1,3 +1,13 @@
+"""
+FOR RVR SWARM MVP
+
+Lead RVR Code, Transmitting
+Spring 2026 Robotics, Galloway
+Dr. A
+
+LAST: 04.09.26
+"""
+
 import os
 import sys
 import time
