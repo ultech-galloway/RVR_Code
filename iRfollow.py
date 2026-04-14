@@ -5,7 +5,7 @@ Follow RVR Code, Receiving
 Spring 2026 Robotics, Galloway
 Dr. A
 
-LAST: 04.09.26
+LAST: 04.14.26
 """
 
 import os
@@ -18,73 +18,81 @@ from sphero_sdk import RawMotorModesEnum
 
 rvr = SpheroRvrObserver()
 
-# Track detected IR info
-last_detected_location = None
-last_detected_code = None
+# Global variables to track sensor readings
+current_readings = {'front': 255, 'right': 255, 'back': 255, 'left': 255}
 
-def infrared_message_received_handler(infrared_message):
-    """Handler called when IR message is received"""
-    global last_detected_location, last_detected_code
+def parse_infrared_readings(sensor_data):
+    """
+    Parse the 32-bit sensor data into individual sensor readings
+    Returns dict with 'front', 'back', 'left', 'right' keys
+    """
+    # Extract each byte from the 32-bit value
+    front = sensor_data & 0xFF          # bits 0-7
+    right = (sensor_data >> 8) & 0xFF   # bits 8-15
+    back = (sensor_data >> 16) & 0xFF   # bits 16-23
+    left = (sensor_data >> 24) & 0xFF   # bits 24-31
     
-    print('IR Message Received:', infrared_message)
+    return {
+        'front': front,
+        'right': right,
+        'back': back,
+        'left': left
+    }
+
+def infrared_readings_handler(infrared_data):
+    """Handler for infrared sensor readings"""
+    global current_readings
     
-    # infrared_message format: {'Robot': [(sensor_id, code), ...]}
-    # sensor_id: 0=front, 1=back, 2=left, 3=right
-    # code: 1=far, 0=near (based on leader's broadcast settings)
+    if 'SensorData' in infrared_data:
+        sensor_data = infrared_data['SensorData']
+        current_readings = parse_infrared_readings(sensor_data)
+
+def determine_direction(readings):
+    """
+    Determine which direction has the strongest signal
+    Returns: 'front', 'back', 'left', 'right', or None
+    """
+    # Filter out 255 (empty) readings
+    valid_readings = {k: v for k, v in readings.items() if v < 255}
     
-    if 'Robot' in infrared_message and len(infrared_message['Robot']) > 0:
-        # Get the first detection (sensor_id, code)
-        detection = infrared_message['Robot'][0]
-        
-        if isinstance(detection, tuple) and len(detection) == 2:
-            last_detected_location = detection[0]
-            last_detected_code = detection[1]
-        elif isinstance(detection, int):
-            # Sometimes just the sensor ID is returned
-            last_detected_location = detection
-            last_detected_code = None
-        
-        sensor_names = {0: "Front", 1: "Back", 2: "Left", 3: "Right"}
-        sensor_name = sensor_names.get(last_detected_location, "Unknown")
-        
-        signal_type = ""
-        if last_detected_code == 1:
-            signal_type = " (FAR signal)"
-        elif last_detected_code == 0:
-            signal_type = " (NEAR signal)"
-        
-        print(f"  → {sensor_name} sensor{signal_type}")
-    else:
-        last_detected_location = None
-        last_detected_code = None
-        print("  → No signal detected")
+    if not valid_readings:
+        return None
+    
+    # Find direction with lowest value (strongest signal)
+    # IR codes 0-15 mean signal detected, lower = stronger
+    strongest_direction = min(valid_readings, key=valid_readings.get)
+    
+    return strongest_direction
 
 def main():
-    global last_detected_location, last_detected_code
+    global current_readings
     
     try:
         print("=== IR RECEIVER RVR ===")
-        print("Listening for IR signals...\n")
+        print("Polling IR sensors for signals...\n")
         
         rvr.wake()
         time.sleep(2)
 
-        # Register the IR message handler
-        rvr.on_robot_to_robot_infrared_message_received_notify(
-            handler=infrared_message_received_handler
-        )
-        
-        # Enable IR message notifications
-        rvr.enable_robot_infrared_message_notify(is_enabled=True)
-        
-        print("IR listening enabled. Waiting for signals...")
+        print("Starting sensor polling...")
         print("Will turn toward detected signals.\n")
 
-        # Main control loop
+        # Main control loop - poll sensors continuously
         while True:
-            if last_detected_location == 0:
-                # Signal in front - stop (already facing it)
-                print("Action: Signal ahead - stopped")
+            # Request current IR sensor readings
+            rvr.get_bot_to_bot_infrared_readings(handler=infrared_readings_handler)
+            time.sleep(0.1)  # Give time for response
+            
+            readings = current_readings
+            
+            # Show readings
+            print(f"Readings - Front:{readings['front']:3d} Right:{readings['right']:3d} " +
+                  f"Back:{readings['back']:3d} Left:{readings['left']:3d}", end="")
+            
+            direction = determine_direction(readings)
+            
+            if direction == 'front':
+                print(" → Signal AHEAD - stopped")
                 rvr.raw_motors(
                     left_mode=RawMotorModesEnum.off.value,
                     left_duty_cycle=0,
@@ -92,9 +100,8 @@ def main():
                     right_duty_cycle=0
                 )
             
-            elif last_detected_location == 2:
-                # Signal on left - turn left
-                print("Action: Turning left toward signal")
+            elif direction == 'left':
+                print(" → Signal LEFT - turning left")
                 rvr.raw_motors(
                     left_mode=RawMotorModesEnum.reverse.value,
                     left_duty_cycle=80,
@@ -102,9 +109,8 @@ def main():
                     right_duty_cycle=80
                 )
             
-            elif last_detected_location == 3:
-                # Signal on right - turn right
-                print("Action: Turning right toward signal")
+            elif direction == 'right':
+                print(" → Signal RIGHT - turning right")
                 rvr.raw_motors(
                     left_mode=RawMotorModesEnum.forward.value,
                     left_duty_cycle=80,
@@ -112,9 +118,8 @@ def main():
                     right_duty_cycle=80
                 )
             
-            elif last_detected_location == 1:
-                # Signal behind - turn around (spin left)
-                print("Action: Signal behind - turning around")
+            elif direction == 'back':
+                print(" → Signal BEHIND - turning around")
                 rvr.raw_motors(
                     left_mode=RawMotorModesEnum.reverse.value,
                     left_duty_cycle=80,
@@ -123,8 +128,7 @@ def main():
                 )
             
             else:
-                # No signal - stop and wait
-                print("Action: No signal - stopped")
+                print(" → No signal - stopped")
                 rvr.raw_motors(
                     left_mode=RawMotorModesEnum.off.value,
                     left_duty_cycle=0,
@@ -132,7 +136,7 @@ def main():
                     right_duty_cycle=0
                 )
             
-            time.sleep(0.3)
+            time.sleep(0.2)
 
     except KeyboardInterrupt:
         print('\n\nStopping...')
