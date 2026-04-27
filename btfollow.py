@@ -1,10 +1,10 @@
 '''
 btfollow is a program that...
 
-LAST: Dr. A (04.21.26)
+LAST: Dr. A (04.27.26) - Simplified Bluetooth
 '''
 
-# GOTO line 52 to change leader's MAC address
+# GOTO line 17 to change leader's MAC address
 
 import os
 import sys
@@ -18,39 +18,29 @@ from sphero_sdk import RawMotorModesEnum
 
 rvr = SpheroRvrObserver()
 
+# Replace with Leader's MAC address
+LEADER_MAC = "D8:3A:DD:67:DE:90"  # <-- PUT YOUR LEADER'S MAC HERE
+LEADER_CHANNEL = 1  # Fixed channel
 
-def connect_to_leader(leader_mac_address):
-    """Connect to leader via Bluetooth"""
-    uuid = "00001101-0000-1000-8000-00805F9B34FB"
+
+def connect_to_leader(leader_mac_address, channel):
+    """Connect to leader via Bluetooth - SIMPLIFIED VERSION"""
     
-    print(f"Searching for Leader at {leader_mac_address}...")
+    print(f"Connecting to Leader at {leader_mac_address} on channel {channel}...")
     
-    # Find the service
-    service_matches = bluetooth.find_service(uuid=uuid, address=leader_mac_address)
-    
-    if len(service_matches) == 0:
-        print("Could not find the Leader RVR service")
-        return None
-    
-    first_match = service_matches[0]
-    port = first_match["port"]
-    name = first_match["name"]
-    host = first_match["host"]
-    
-    print(f"Connecting to '{name}' on {host}:{port}")
-    
-    # Create client socket
+    # Create client socket and connect directly
     sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-    sock.connect((host, port))
     
-    print("Connected to Leader!\n")
-    return sock
+    try:
+        sock.connect((leader_mac_address, channel))
+        print("Connected to Leader!\n")
+        return sock
+    except Exception as e:
+        print(f"Connection failed: {e}")
+        return None
 
 
 def main():
-    # Replace with Leader's MAC address
-    LEADER_MAC = "XX:XX:XX:XX:XX:XX"
-    
     sock = None
     
     try:
@@ -61,7 +51,7 @@ def main():
         time.sleep(2)
         
         # Connect to leader
-        sock = connect_to_leader(LEADER_MAC)
+        sock = connect_to_leader(LEADER_MAC, LEADER_CHANNEL)
         
         if not sock:
             print("Failed to connect to Leader. Exiting.")
