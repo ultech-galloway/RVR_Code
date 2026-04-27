@@ -1,7 +1,7 @@
 '''
 btlead is a program that...
 
-LAST: Dr. A (04.27.26) - Simplified Bluetooth
+LAST: Dr. A (04.27.26) - Added yaw reset
 '''
 
 import os
@@ -97,16 +97,29 @@ def main():
         rvr.wake()
         time.sleep(2)
         
+        # RESET YAW - Set current direction as "0 degrees"
+        print("Resetting yaw to 0...")
+        rvr.reset_yaw()
+        time.sleep(1)
+        print("Yaw reset complete!\n")
+        
         # Start Bluetooth server in background thread
         bt_thread = threading.Thread(target=start_bluetooth_server)
         bt_thread.daemon = True
         bt_thread.start()
         
         print("Waiting for followers to connect...")
-        print("(Give followers 10 seconds to connect)\n")
-        time.sleep(10)
+        print("(Give followers 15 seconds to connect)\n")
+        time.sleep(15)
         
         print(f"Connected followers: {len(follower_clients)}")
+        
+        # Tell all followers to reset yaw
+        print("\nTelling followers to reset yaw...")
+        command = {"action": "reset_yaw"}
+        broadcast_command(command)
+        time.sleep(2)
+        
         print("\nStarting movement sequence...\n")
         
         # Movement sequence
