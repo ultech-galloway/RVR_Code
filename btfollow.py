@@ -1,7 +1,11 @@
 '''
-btfollow is a program that...
+btfollow is a program that opens a BT connection
+to the lead RVR and follows its commands. Each
+follow RVR independently resest yaw to 0 based on
+its actual position in the real world, not relative
+to the lead RVR. See lines 85-87.
 
-LAST: Dr. A (04.27.26) - Simplified Bluetooth
+LAST: Dr. A (04.27.26) - Added yaw reset
 '''
 
 # GOTO line 22 to change leader's MAC address
@@ -78,7 +82,11 @@ def main():
                         command = json.loads(line)
                         print(f"Received command: {command}")
                         
-                        if command["action"] == "drive":
+                        if command["action"] == "reset_yaw":
+                            print(f"  → Resetting yaw to 0")
+                            rvr.reset_yaw()
+                        
+                        elif command["action"] == "drive":
                             speed = command["speed"]
                             heading = command["heading"]
                             print(f"  → Driving: speed={speed}, heading={heading}")
