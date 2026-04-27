@@ -1,7 +1,7 @@
 '''
 btlead is a program that...
 
-LAST: Dr. A (04.21.26)
+LAST: Dr. A (04.27.26) - Simplified Bluetooth
 '''
 
 import os
@@ -16,7 +16,6 @@ from sphero_sdk import SpheroRvrObserver
 from sphero_sdk import RawMotorModesEnum
 
 rvr = SpheroRvrObserver()
-
 
 # List of connected followers
 follower_clients = []
@@ -57,43 +56,37 @@ def broadcast_command(command_data):
 
 
 def start_bluetooth_server():
-    """Start Bluetooth server in separate thread"""
-    server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-    server_sock.bind(("", bluetooth.PORT_ANY))
-    server_sock.listen(5)
-    
-    port = server_sock.getsockname()[1]
-    
-    # Create service UUID
-    uuid = "00001101-0000-1000-8000-00805F9B34FB"
-    
-    bluetooth.advertise_service(
-        server_sock,
-        "RVR_Leader",
-        service_id=uuid,
-        service_classes=[uuid, bluetooth.SERIAL_PORT_CLASS],
-        profiles=[bluetooth.SERIAL_PORT_PROFILE]
-    )
-    
-    print(f"=== LEADER RVR - Bluetooth Server ===")
-    print(f"Waiting for followers on RFCOMM channel {port}")
-    print(f"Service UUID: {uuid}\n")
-
-    while True:
-        try:
-            client_sock, client_info = server_sock.accept()
-            print(f"Accepted connection from {client_info}")
-            
-            # Handle each client in a separate thread
-            client_thread = threading.Thread(
-                target=handle_follower_client,
-                args=(client_sock, client_info)
-            )
-            client_thread.daemon = True
-            client_thread.start()
-            
-        except Exception as e:
-            print(f"Error accepting connection: {e}")
+    """Start Bluetooth server - SIMPLIFIED VERSION"""
+    try:
+        server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+        
+        # Bind to channel 1 (fixed channel, no service discovery needed)
+        server_sock.bind(("", 1))
+        server_sock.listen(5)
+        
+        print(f"=== LEADER RVR - Bluetooth Server ===")
+        print(f"Listening on RFCOMM channel 1")
+        print(f"Leader MAC: {bluetooth.read_local_bdaddr()[0]}")
+        print(f"Followers should connect to this MAC on channel 1\n")
+        
+        while True:
+            try:
+                client_sock, client_info = server_sock.accept()
+                print(f"Accepted connection from {client_info}")
+                
+                # Handle each client in a separate thread
+                client_thread = threading.Thread(
+                    target=handle_follower_client,
+                    args=(client_sock, client_info)
+                )
+                client_thread.daemon = True
+                client_thread.start()
+                
+            except Exception as e:
+                print(f"Error accepting connection: {e}")
+                
+    except Exception as e:
+        print(f"Error starting Bluetooth server: {e}")
 
 
 def main():
