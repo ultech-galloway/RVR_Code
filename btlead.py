@@ -111,11 +111,11 @@ def main():
         
         # Movement sequence
         print("PHASE 1: Moving forward for 5 seconds")
-        command = {"action": "drive", "speed": 128, "heading": 0}
+        command = {"action": "drive", "speed": 64, "heading": 0}
         broadcast_command(command)
         
         rvr.drive_with_heading(
-            speed=128,
+            speed=64,
             heading=0,
             flags=0
         )
@@ -133,11 +133,11 @@ def main():
         time.sleep(2)
         
         print("PHASE 3: Turning right (heading 90)")
-        command = {"action": "drive", "speed": 128, "heading": 90}
+        command = {"action": "drive", "speed": 64, "heading": 90}
         broadcast_command(command)
         
         rvr.drive_with_heading(
-            speed=128,
+            speed=64,
             heading=90,
             flags=0
         )
