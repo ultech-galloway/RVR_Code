@@ -4,7 +4,7 @@ btfollow is a program that...
 LAST: Dr. A (04.27.26) - Simplified Bluetooth
 '''
 
-# GOTO line 17 to change leader's MAC address
+# GOTO line 22 to change leader's MAC address
 
 import os
 import sys
@@ -19,7 +19,7 @@ from sphero_sdk import RawMotorModesEnum
 rvr = SpheroRvrObserver()
 
 # Replace with Leader's MAC address
-LEADER_MAC = "D8:3A:DD:67:DE:90"  # <-- PUT YOUR LEADER'S MAC HERE
+LEADER_MAC = "D8:3A:DD:67:DE:90"
 LEADER_CHANNEL = 1  # Fixed channel
 
 
