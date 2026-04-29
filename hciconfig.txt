@@ -1,0 +1,23 @@
+COPY AND PASTE IN TERMINAL:
+sudo hciconfig hci0 up
+sudo hciconfig hci0 piscan
+sudo systemctl start bluetooth
+sudo systemctl enable bluetooth
+sudo bluetoothctl
+
+
+THEN THESE AS ANSWERS TO bluetoothctl:
+power on
+discoverable on
+pairable on
+agent on
+default-agent
+exit
+
+
+RUN AGAIN:
+sudo hciconfig
+
+
+THEN RUN YOUR PROGRAM:
+python3 btlead.py
