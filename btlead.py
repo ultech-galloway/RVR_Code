@@ -1,7 +1,7 @@
 '''
 btlead is a program that creates a "lead" RVR (this file)
 which communicates commands to 1+ other "follow" RVRs.
-All robots reset yaw to 9, independent of their actual
+All robots reset yaw to 0, independent of their actual
 position in reality, allowing for creative patterns and
 movements.
 
