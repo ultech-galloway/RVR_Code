@@ -23,7 +23,7 @@ from sphero_sdk import RawMotorModesEnum
 rvr = SpheroRvrObserver()
 
 # Replace with Leader's MAC address
-LEADER_MAC = "D8:3A:DD:67:DE:90"
+LEADER_MAC = "D8:3A:DD:67:DF:F8"
 LEADER_CHANNEL = 1  # Fixed channel
 
 
@@ -89,12 +89,13 @@ def main():
                         elif command["action"] == "drive":
                             speed = command["speed"]
                             heading = command["heading"]
+                            flags = command["flags"]
                             print(f"  → Driving: speed={speed}, heading={heading}")
                             
                             rvr.drive_with_heading(
                                 speed=speed,
                                 heading=heading,
-                                flags=0
+                                flags=flags
                             )
                         
                         elif command["action"] == "stop":
