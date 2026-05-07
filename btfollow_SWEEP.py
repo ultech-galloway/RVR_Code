@@ -97,7 +97,7 @@ def main():
                             flags = command["flags"]
                             is_sweeping = command.get("sweeping", False)
                             
-                            # Only scale speed during sweeps for formation
+                            # Only scale speed during sweeps
                             if is_sweeping:
                                 speed_multiplier = FOLLOWER_POSITION * 0.25
                                 adjusted_speed = int(speed * speed_multiplier)
